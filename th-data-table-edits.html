@@ -1,0 +1,135 @@
+<link rel="import" href="../polymer/polymer.html"> 
+<link rel="import" href="../th-theme/th-theme.html"> 
+
+<!--
+A Thelma component providing solution to no problem in particular.
+
+##### Example
+
+    <th-data-table-edits></th-data-table-edits>
+
+@element th-data-table-edits
+@blurb Element providing solution to no problem in particular.
+@status alpha
+@homepage http://nishacodes.github.io/th-data-table-edits
+-->
+
+<polymer-element name="th-data-table-edits" attributes="input changes output">
+  <template>
+    <core-style ref="theme"></core-style>
+    <link rel="stylesheet" href="th-data-table-edits.css">
+    
+    <template repeat="{{change in changes}}">
+      <li>Row: {{change.row}}, Col: {{change.col}}, New Value: {{change.newValue}}, Old Value: {{change.oldValue}}</li>
+    </template>
+  </template>
+  <script>
+    Polymer({
+      changes: [],
+      observe: {
+        'changes': 'mapOutput'
+      },
+      domReady: function () {
+        var self = this,
+            parent = this.parentNode;
+        
+        parent.addEventListener('th-cell-edit', function(e){
+          self.editCell(e.detail)
+        });
+
+        if (self.changes.length){
+          self.mapOutput();
+        }
+
+
+        
+      },
+      editCell: function(changes){
+        var change = {};
+            change.type = 'Cell Edit';
+            change.row = changes[0][0];
+            change.col = changes[0][1];
+            change.oldValue = changes[0][2];
+            change.newValue = changes[0][3];
+
+        this.changes.push(change);
+      },
+
+      mapOutput: function(){
+        var self = this;
+        var output = self.JSONtoTable(self.input);
+        
+        for (var i=0; i<self.changes.length; i++){
+          output[self.changes[i].row][self.changes[i].col] = self.changes[i].newValue;
+        }
+        self.output = self.tableToJSON(output);
+      },
+      JSONtoTable: function(jsonData){
+        var tableData = [];
+        var tableData = jsonData.map(function(obj){
+
+
+        
+          var row=[];
+
+          for (var prop in obj){  
+            row.push(obj[prop]);
+          }
+         return row;
+        
+        })
+
+        tableData.unshift(Object.keys(jsonData[0]));
+        return tableData;
+
+      },
+      tableToJSON: function(tableData){
+        var self = this;
+      
+        var json = [];
+        if(self.firstRowIsHeader){
+      
+          for(var i=1; i<tableData.length; i++){
+            var row = {};
+            for(var index=0; index<tableData[0].length; index++){ // use keys from the first row
+              if(tableData[0][index]){ // this condition leaves out blank columns
+                if(tableData[i][index]){
+                  row[tableData[0][index]] = tableData[i][index]; 
+                }
+              }
+            }
+            if (Object.keys(row).length > 0){ // this condition leaves out blank rows
+              json.push(row);
+            }
+          }
+        } else {
+          for(var i=0; i<tableData.length; i++){
+            var row = {};
+            for(var index=0; index<tableData[0].length; index++){ // use keys from the first row
+              if(tableData[0][index]){ // this condition leaves out blank columns
+                row[index] = tableData[i][index]; 
+              }
+            }
+            var columns = Object.keys(row);
+            if (columns.length > 0 || (columns.indexOf('0') > -1 && row['0'])){ // this condition leaves out blank rows 
+                json.push(row);  
+            }
+          }
+        }
+        return json;
+      }
+    });
+
+    // Types of changes
+    // - cell content changes
+    // - row insert
+    // - row delete
+    // - column add
+    // - column delete
+    // Listens for events fired by a th-data-table with the same parent
+    // Applies those changes to input
+    // th-data-table is in editable mode
+    // th-data-table applies 
+    // 
+  </script>
+</polymer-element>
