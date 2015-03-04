@@ -5,9 +5,10 @@
 A Thelma component providing solution to no problem in particular.
 
 ##### Example
-
+  <div>
+    <th-data-table readOnly="true"></th-data-table>
     <th-data-table-edits></th-data-table-edits>
-
+  </div>
 @element th-data-table-edits
 @blurb Element providing solution to no problem in particular.
 @status alpha
@@ -20,7 +21,7 @@ A Thelma component providing solution to no problem in particular.
     <link rel="stylesheet" href="th-data-table-edits.css">
     
     <template repeat="{{change in changes}}">
-      <li>Row: {{change.row}}, Col: {{change.col}}, New Value: {{change.newValue}}, Old Value: {{change.oldValue}}</li>
+      <li><strong>{{change.type}}:</strong> Value at [{{change.row}}, {{change.col}}] was changed to <strong>{{change.newValue | nullFilter}}</strong> from {{change.oldValue | nullFilter}}</li>
     </template>
   </template>
   <script>
@@ -37,6 +38,9 @@ A Thelma component providing solution to no problem in particular.
           self.editCell(e.detail)
         });
 
+        var dataTable = parent.shadowRoot ? parent.shadowRoot.querySelector('th-data-table') : parent.querySelector('th-data-table');
+        dataTable.readOnly = false;
+
         if (self.changes.length){
           self.mapOutput();
         }
@@ -46,7 +50,7 @@ A Thelma component providing solution to no problem in particular.
       },
       editCell: function(changes){
         var change = {};
-            change.type = 'Cell Edit';
+            change.type = 'Cell Edited';
             change.row = changes[0][0];
             change.col = changes[0][1];
             change.oldValue = changes[0][2];
@@ -78,8 +82,11 @@ A Thelma component providing solution to no problem in particular.
          return row;
         
         })
-
-        tableData.unshift(Object.keys(jsonData[0]));
+        
+        if (tableData.length) {
+          tableData.unshift(Object.keys(jsonData[0]));  
+        }
+        
         return tableData;
 
       },
@@ -87,7 +94,7 @@ A Thelma component providing solution to no problem in particular.
         var self = this;
       
         var json = [];
-        if(self.firstRowIsHeader){
+        if(self.firstRowIsHeader){ // this is not tracked in this component
       
           for(var i=1; i<tableData.length; i++){
             var row = {};
@@ -117,6 +124,9 @@ A Thelma component providing solution to no problem in particular.
           }
         }
         return json;
+      },
+      nullFilter: function(value){
+        return value ? value : "____";
       }
     });
 
