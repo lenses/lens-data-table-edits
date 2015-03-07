@@ -21,7 +21,13 @@ A Thelma component providing solution to no problem in particular.
     <link rel="stylesheet" href="th-data-table-edits.css">
     
     <template repeat="{{change in changes}}">
-      <li><strong>{{change.type}}:</strong> Value at [{{change.row}}, {{change.col}}] was changed to <strong>{{change.newValue | nullFilter}}</strong> from {{change.oldValue | nullFilter}}</li>
+      <template if="{{change.type === 'Cell Edited'}}">
+        <li><strong>{{change.type}}:</strong> Value at [{{change.row}}, {{change.col}}] was changed to <strong>{{change.newValue | nullFilter}}</strong> from {{change.oldValue | nullFilter}}</li>
+      </template>
+
+      <template if="{{change.type === 'Row Added'}}">
+        <li><strong>{{change.type}}:</strong> {{change.amount}} row(s) added at row {{change.index}} </li>
+      </template>
     </template>
   </template>
   <script>
@@ -36,6 +42,10 @@ A Thelma component providing solution to no problem in particular.
         
         parent.addEventListener('th-cell-edit', function(e){
           self.editCell(e.detail)
+        });
+
+        parent.addEventListener('th-row-added', function(e){
+          self.addRow(e.detail)
         });
 
         var dataTable = parent.shadowRoot ? parent.shadowRoot.querySelector('th-data-table') : parent.querySelector('th-data-table');
@@ -58,13 +68,35 @@ A Thelma component providing solution to no problem in particular.
 
         this.changes.push(change);
       },
+      addRow: function(changes){
+        // alert();
+        var change = {};
+            change.type = 'Row Added';
+            change.index = changes.index;
+            change.amount = changes.amount;
 
+        this.changes.push(change);
+      },
       mapOutput: function(){
         var self = this;
         var output = self.JSONtoTable(self.input);
         
         for (var i=0; i<self.changes.length; i++){
-          output[self.changes[i].row][self.changes[i].col] = self.changes[i].newValue;
+var change = self.changes[i];
+
+          console.log(change.type);
+          if (change.type=='Cell Edited'){
+            output[change.row][change.col] = change.newValue;
+          } else if (change.type=='Row Added'){
+            var newRow = [];
+            for(var i=0; i<output[0].length; i++){
+              newRow.push(" ");
+            }
+            
+            output.splice(change.index, 0, newRow)
+          }
+          
+     
         }
         self.output = self.tableToJSON(output);
       },
@@ -105,9 +137,9 @@ A Thelma component providing solution to no problem in particular.
                 }
               }
             }
-            if (Object.keys(row).length > 0){ // this condition leaves out blank rows
+            // if (Object.keys(row).length > 0){ // this condition leaves out blank rows
               json.push(row);
-            }
+            // }
           }
         } else {
           for(var i=0; i<tableData.length; i++){
@@ -118,9 +150,9 @@ A Thelma component providing solution to no problem in particular.
               }
             }
             var columns = Object.keys(row);
-            if (columns.length > 0 || (columns.indexOf('0') > -1 && row['0'])){ // this condition leaves out blank rows 
+            // if (columns.length > 0 || (columns.indexOf('0') > -1 && row['0'])){ // this condition leaves out blank rows 
                 json.push(row);  
-            }
+            // }
           }
         }
         return json;
