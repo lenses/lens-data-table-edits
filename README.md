@@ -1,3 +1,3 @@
-# th-data-table-edits
+# lens-data-table-edits
 
-See the [component page](http://nishacodes.github.io/th-data-table-edits) for more information.
+See the [component page](http://nishacodes.github.io/lens-data-table-edits) for more information.

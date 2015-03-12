@@ -1,8 +1,8 @@
 {
-  "name": "th-data-table-edits",
+  "name": "lens-data-table-edits",
   "version": "0.0.0",
-  "keywords": "thelma, polymer, web-components",
-  "main": "th-data-table-edits.html",
+  "keywords": "lenses, polymer, web-components",
+  "main": "lens-data-table-edits.html",
   "dependencies": {  
     "th-theme": "thelmanews/th-theme",
     "polymer": "Polymer/polymer#~0.5.1"

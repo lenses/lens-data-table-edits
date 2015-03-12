@@ -7,18 +7,18 @@ A Thelma component providing solution to no problem in particular.
 ##### Example
   <div>
     <th-data-table readOnly="true"></th-data-table>
-    <th-data-table-edits></th-data-table-edits>
+    <lens-data-table-edits></lens-data-table-edits>
   </div>
-@element th-data-table-edits
+@element lens-data-table-edits
 @blurb Element providing solution to no problem in particular.
 @status alpha
-@homepage http://nishacodes.github.io/th-data-table-edits
+@homepage http://nishacodes.github.io/lens-data-table-edits
 -->
 
-<polymer-element name="th-data-table-edits" attributes="input changes output">
+<polymer-element name="lens-data-table-edits" attributes="input changes output">
   <template>
     <core-style ref="theme"></core-style>
-    <link rel="stylesheet" href="th-data-table-edits.css">
+    <link rel="stylesheet" href="lens-data-table-edits.css">
     
     <template repeat="{{change in changes}}">
       <li><strong>{{change.type}}:</strong> Value at [{{change.row}}, {{change.col}}] was changed to <strong>{{change.newValue | nullFilter}}</strong> from {{change.oldValue | nullFilter}}</li>
