@@ -19,114 +19,208 @@ A Thelma component providing solution to no problem in particular.
   <template>
     <core-style ref="theme"></core-style>
     <link rel="stylesheet" href="lens-data-table-edits.css">
-    
+    <lens-data-table id="outputTable"  input="{{_input}}" output="{{_output}}" ></lens-data-table>
     <template repeat="{{change in changes}}">
       <li><strong>{{change.type}}:</strong> Value at [{{change.row}}, {{change.col}}] was changed to <strong>{{change.newValue | nullFilter}}</strong> from {{change.oldValue | nullFilter}}</li>
     </template>
   </template>
+  <script src="../lodash/lodash.js"></script>
   <script>
     Polymer({
-      changes: [],
+      // changes: [],
+      trackChanges: false,
       observe: {
-        'changes': 'mapOutput'
+        'changes': 'mapOutput',
+        '_output': 'compareData',
+        'input': 'addIds'
       },
       domReady: function () {
-        var self = this,
-            parent = this.parentNode;
-        
-        parent.addEventListener('th-cell-edit', function(e){
-          self.editCell(e.detail)
-        });
+        var self = this;  
+        console.log(self.changes);
+        if (self.changes && self.changes.length){
+          self._applyChanges();
+          self.trackChanges = false;
+        } else {
+          self.trackChanges = true;
+        }
+        if (this._input){
 
-        var dataTable = parent.shadowRoot ? parent.shadowRoot.querySelector('th-data-table') : parent.querySelector('th-data-table');
-        dataTable.readOnly = false;
-
-        if (self.changes.length){
-          self.mapOutput();
         }
 
+        // Notes 
+        // for now save the _input, 
+        // if there is _input, then use that and convert _output to output (remove ids);
+        // figure out how to hide the _id column in the table
+        // after that works, then save the changes, and reapply them on input to produce output
+        // how to display changes by highlighting? 
+        // maybe the data you delete just appears in red in the table instead of deleting
+        // figure out how not to show the extra table in lens-node
+      },
+      mapOutput: function(){
+console.log(this.changes);
+      },
+      _applyChanges: function(){
+        var self = this;
+        //TODO: when changing _input, changes are not being reflected in the tableData for some reason.
+        self.changes.forEach(function(change){
+          switch(change.type) {
+            case 'Row Added':
+                self._input.splice(change.row, 1, newValue);
+                break;
+            case 'Data Edited':
+                var row = _.findWhere(self._input, {'_id': change.id});
+                row[change.col] = change.newValue;
+                console.log(self._input);
+                break;
+            default:
+                console.log('what to do with this?');
+                console.log(change);
+          }
 
-        
+        })
+      },
+      addIds: function(){
+        this._input = this.input.map(function(row, i){
+          var newRow = _.clone(row);
+          newRow["_id"] = i+1;
+          return newRow;
+        })
+      },
+      compareData: function(){
+        var self = this;
+        console.log("***");
+        if (self.trackChanges){
+        self.changes = [];
+        // console.log(this.input);
+        // console.log(this._output);
+        // var diff = _.difference(self.input, self._output);
+        // console.log(diff);
+        var addedRows = 0
+
+        // TODO: check for heading changes (added/removed columns);
+        this._output.forEach(function(outputRow, i){  
+          // Check for new rows
+          if(!outputRow["_id"]){
+            var change = {
+              'type': 'Row Added',
+              'row': i,
+              'newValue': outputRow
+            }
+            self.changes.push(change);
+          } else {
+            // Check for edits
+            var inputRow = _.findWhere(self._input, {'_id':outputRow["_id"]});
+            var match = _.isMatch(outputRow, inputRow);
+            // assumes column names are same
+            if (!match){
+
+              for(var column in outputRow){
+                if (outputRow[column] != inputRow[column]){
+                  var change = { 
+                    'type': 'Data Edited',
+                    'row': i,
+                    'oldValue': inputRow[column],
+                    'newValue': outputRow[column],
+                    'col': column,
+                    'id': outputRow['_id']
+                   };
+                  self.changes.push(change);
+                }  
+              }
+            }
+
+          }
+
+          // TODO: check for deleted rows
+
+
+console.log(self.changes);
+
+
+          // var match = _.isMatch(outputRow, self.input[i]);
+          // console.log(match);
+        })
+}
       },
       editCell: function(changes){
-        var change = {};
-            change.type = 'Cell Edited';
-            change.row = changes[0][0];
-            change.col = changes[0][1];
-            change.oldValue = changes[0][2];
-            change.newValue = changes[0][3];
+        // var change = {};
+        //     change.type = 'Cell Edited';
+        //     change.row = changes[0][0];
+        //     change.col = changes[0][1];
+        //     change.oldValue = changes[0][2];
+        //     change.newValue = changes[0][3];
 
-        this.changes.push(change);
+        // this.changes.push(change);
       },
 
-      mapOutput: function(){
-        var self = this;
-        var output = self.JSONtoTable(self.input);
+      _calculateOutput: function(){
+        // var self = this;
+        // var output = self.JSONtoTable(self.input);
         
-        for (var i=0; i<self.changes.length; i++){
-          output[self.changes[i].row][self.changes[i].col] = self.changes[i].newValue;
-        }
-        self.output = self.tableToJSON(output);
+        // for (var i=0; i<self.changes.length; i++){
+        //   output[self.changes[i].row][self.changes[i].col] = self.changes[i].newValue;
+        // }
+        // self.output = self.tableToJSON(output);
       },
       JSONtoTable: function(jsonData){
-        var tableData = [];
-        var tableData = jsonData.map(function(obj){
+        // var tableData = [];
+        // var tableData = jsonData.map(function(obj){
 
 
         
-          var row=[];
+        //   var row=[];
 
-          for (var prop in obj){  
-            row.push(obj[prop]);
-          }
-         return row;
+        //   for (var prop in obj){  
+        //     row.push(obj[prop]);
+        //   }
+        //  return row;
         
-        })
+        // })
         
-        if (tableData.length) {
-          tableData.unshift(Object.keys(jsonData[0]));  
-        }
+        // if (tableData.length) {
+        //   tableData.unshift(Object.keys(jsonData[0]));  
+        // }
         
-        return tableData;
+        // return tableData;
 
       },
       tableToJSON: function(tableData){
-        var self = this;
+        // var self = this;
       
-        var json = [];
-        if(self.firstRowIsHeader){ // this is not tracked in this component
+        // var json = [];
+        // if(self.firstRowIsHeader){ // this is not tracked in this component
       
-          for(var i=1; i<tableData.length; i++){
-            var row = {};
-            for(var index=0; index<tableData[0].length; index++){ // use keys from the first row
-              if(tableData[0][index]){ // this condition leaves out blank columns
-                if(tableData[i][index]){
-                  row[tableData[0][index]] = tableData[i][index]; 
-                }
-              }
-            }
-            if (Object.keys(row).length > 0){ // this condition leaves out blank rows
-              json.push(row);
-            }
-          }
-        } else {
-          for(var i=0; i<tableData.length; i++){
-            var row = {};
-            for(var index=0; index<tableData[0].length; index++){ // use keys from the first row
-              if(tableData[0][index]){ // this condition leaves out blank columns
-                row[index] = tableData[i][index]; 
-              }
-            }
-            var columns = Object.keys(row);
-            if (columns.length > 0 || (columns.indexOf('0') > -1 && row['0'])){ // this condition leaves out blank rows 
-                json.push(row);  
-            }
-          }
-        }
-        return json;
+        //   for(var i=1; i<tableData.length; i++){
+        //     var row = {};
+        //     for(var index=0; index<tableData[0].length; index++){ // use keys from the first row
+        //       if(tableData[0][index]){ // this condition leaves out blank columns
+        //         if(tableData[i][index]){
+        //           row[tableData[0][index]] = tableData[i][index]; 
+        //         }
+        //       }
+        //     }
+        //     if (Object.keys(row).length > 0){ // this condition leaves out blank rows
+        //       json.push(row);
+        //     }
+        //   }
+        // } else {
+        //   for(var i=0; i<tableData.length; i++){
+        //     var row = {};
+        //     for(var index=0; index<tableData[0].length; index++){ // use keys from the first row
+        //       if(tableData[0][index]){ // this condition leaves out blank columns
+        //         row[index] = tableData[i][index]; 
+        //       }
+        //     }
+        //     var columns = Object.keys(row);
+        //     if (columns.length > 0 || (columns.indexOf('0') > -1 && row['0'])){ // this condition leaves out blank rows 
+        //         json.push(row);  
+        //     }
+        //   }
+        // }
+        // return json;
       },
       nullFilter: function(value){
-        return value ? value : "____";
+        // return value ? value : "____";
       }
     });
 
